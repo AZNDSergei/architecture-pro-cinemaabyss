@@ -55,7 +55,7 @@ jobs:
         working-directory: tests/postman
         run: |
 
-          docker compose up -d --wait event-service
+          docker compose up -d 
   
           docker compose ps
           docker compose logs --tail=50 event-service
