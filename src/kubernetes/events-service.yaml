@@ -25,12 +25,27 @@ spec:
         image: ghcr.io/azndsergei/architecture-pro-cinemaabyss/event-service:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 8081
+        - containerPort: 8082
         env:
+        - name: CLIENT_ID
+          value: node-events-app
+        - name: GROUP_ID
+          value: node-events-group
+        - name: KAFKA_BROKERS
+          value: kafka:9092
+        - name: KAFKA_TOPIC_MOVIE
+          value: movie-events
+        - name: KAFKA_TOPIC_USER
+          value: "user-events"
+        - name: KAFKA_TOPIC_PAYMENT
+          value: "payment-events"
+        - name: MONGODB_URI
+          value: "mongodb://mongo:27017"
+        - name: MONGODB_DB
+          value: "eventsdb"
         - name: PORT
-          value: "8081"
-        - name: DB_CONNECTION_STRING
-          value: "postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable"
+          value: "8082"
+        
         envFrom:
         - configMapRef:
             name: cinemaabyss-config
@@ -46,15 +61,17 @@ spec:
         readinessProbe:
           httpGet:
             path: /api/events/health
-            port: 8081
-          initialDelaySeconds: 5
+            port: 8082
+          initialDelaySeconds: 10
           periodSeconds: 10
+          failureThreshold: 10
         livenessProbe:
           httpGet:
             path: /api/events/health
-            port: 8081
+            port: 8082
           initialDelaySeconds: 15
           periodSeconds: 20
+          failureThreshold: 10
       restartPolicy: Always
       imagePullSecrets:
         - name: dockerconfigjson

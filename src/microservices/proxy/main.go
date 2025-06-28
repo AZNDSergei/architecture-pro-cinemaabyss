@@ -14,7 +14,7 @@ import (
 /* ---------- конфигурация ---------- */
 
 var (
-	monolithURL = env("MONOLITH_URL", "http://cinemaabyss-monolith:8099")
+	monolithURL = env("MONOLITH_URL", "http://monolith:8099")
 	moviesURL   = env("MOVIES_URL", "http://movie-service:8081")
 	listenAddr  = ":" + env("PORT", "8080")
 )

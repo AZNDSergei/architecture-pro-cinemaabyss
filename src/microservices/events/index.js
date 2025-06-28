@@ -5,13 +5,12 @@ import { dbReady } from "./db.js";
 import { logEvent } from "./logger.js";
 
 dotenv.config();
-const app  = express();
+const app = express();
 const PORT = process.env.PORT || 8082;
 
-let ready = false;                         
+let ready = false;
 
 app.use(express.json());
-
 
 app.get("/api/events/health", (_, res) =>
   res.status(ready ? 200 : 503).json({ status: ready })
@@ -33,20 +32,18 @@ function eventHandler(topicKey) {
   };
 }
 
-app.post("/api/events/movie",   eventHandler("movie"));
-app.post("/api/events/user",    eventHandler("user"));
+app.post("/api/events/movie", eventHandler("movie"));
+app.post("/api/events/user", eventHandler("user"));
 app.post("/api/events/payment", eventHandler("payment"));
 
 app.use((err, _req, res, _next) =>
   res.status(500).json({ error: err.message })
 );
 
-
-app.listen(PORT, () => console.log(`API listening on :${PORT}`));
-
+// 👉 запуск сервера только после готовности
 (async () => {
   try {
-    const collection = await dbReady;       
+    const collection = await dbReady;
 
     await initKafka(async (topic, { value }) => {
       const doc = JSON.parse(value.toString());
@@ -54,10 +51,14 @@ app.listen(PORT, () => console.log(`API listening on :${PORT}`));
       await collection.insertOne({ topic, ...doc });
     });
 
-    ready = true;                         
+    ready = true;
     console.log("Event-service ready");
+
+    app.listen(PORT, () =>
+      console.log(`✅ API listening on port ${PORT}`)
+    );
   } catch (err) {
-    console.error("Startup error:", err);
-    process.exit(1);                       
+    console.error("❌ Startup error:", err);
+    process.exit(1);
   }
 })();
