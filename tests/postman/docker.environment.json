@@ -4,7 +4,7 @@
   "values": [
     {
       "key": "baseUrl",
-      "value": "http://monolith:8080",
+      "value": "http://monolith:8099",
       "type": "default",
       "enabled": true
     },
@@ -22,7 +22,7 @@
     },
     {
       "key": "proxyServiceUrl",
-      "value": "http://proxy-service:8000",
+      "value": "http://proxy-service:8080",
       "type": "default",
       "enabled": true
     }
