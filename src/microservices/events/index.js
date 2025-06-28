@@ -12,6 +12,7 @@ let ready = false;
 
 app.use(express.json());
 
+
 app.get("/api/events/health", (_, res) =>
   res.status(ready ? 200 : 503).json({ status: ready })
 );
@@ -36,9 +37,13 @@ app.post("/api/events/movie", eventHandler("movie"));
 app.post("/api/events/user", eventHandler("user"));
 app.post("/api/events/payment", eventHandler("payment"));
 
-app.use((err, _req, res, _next) =>
-  res.status(500).json({ error: err.message })
-);
+app.use((err, _req, res, _next) => {
+  console.error(err);                      
+  res.status(500).json({                  
+    error: err.message,
+    stack: err.stack?.split('\n')
+  });
+});
 
 // 👉 запуск сервера только после готовности
 (async () => {
