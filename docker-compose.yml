@@ -95,7 +95,9 @@ services:
       - MONGODB_URI=mongodb://mongo:27017
       - MONGODB_DB=eventsdb
       - PORT=8082
-
+    networks:
+      - cinemaabyss-network
+      
   mongo:
     image: mongo:8
     volumes:
