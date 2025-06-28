@@ -13,7 +13,7 @@ services:
       - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
-      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true      # можно оставить true
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true     
       - KAFKA_KRAFT_CLUSTER_ID=JxCkUVApSFS5USd2Ay03Vw
       - ALLOW_PLAINTEXT_LISTENER=yes
     healthcheck:
@@ -29,31 +29,37 @@ services:
         condition: service_healthy
     entrypoint: |
       bash -e -c '
-      topics=("movie-events" "user-events" "payment-events")
+        TOPICS="movie-events user-events payment-events"
 
-      echo "Ждём готовности брокера…"
-      until kafka-topics.sh --bootstrap-server kafka:9092 --list >/dev/null 2>&1; do
-        sleep 1
-      done
-
-      echo "Создаём топики (если нужны)…"
-      for t in "**$${topics[@]}**"; do
-        kafka-topics.sh --bootstrap-server kafka:9092 \
-          --create --if-not-exists \
-          --topic "**$$t**" --partitions 1 --replication-factor 1
-      done
-
-      echo "Ждём назначения лидеров…"
-      for t in "**$${topics[@]}**"; do
-        until kafka-topics.sh --bootstrap-server kafka:9092 --describe --topic "**$$t**" \
-              | grep -E "^Partition: 0" | grep -q "Leader: [1-9]"; do
-          sleep 0.5
+        echo "🟡  ждём готовности брокера…"
+        until kafka-topics.sh --bootstrap-server kafka:9092 --list >/dev/null 2>&1; do
+          sleep 1
         done
-        echo "**$$t** готов"
-      done
 
-      echo "Все топики готовы, выходим"
+        echo "🟢  создаём топики (если отсутствуют)…"
+        for topic in $$TOPICS; do
+          kafka-topics.sh --bootstrap-server kafka:9092 \
+            --create --if-not-exists \
+            --topic "$$topic" --partitions 1 --replication-factor 1 || true
+        done
+
+        echo "⏳  ждём назначения лидеров…"
+        for topic in $$TOPICS; do
+          printf "   → %s: " "$$topic"
+          while true; do
+            leader=$$(kafka-topics.sh --bootstrap-server kafka:9092 --describe --topic "$$topic" 2>/dev/null \
+                      | grep -E "Partition: *0" \
+                      | sed -E "s/.*Leader: ([0-9-]+).*/\1/")
+            if [ -n "$$leader" ] && [ "$$leader" != "-1" ]; then
+              echo "лидер $$leader готов"; break
+            fi
+            sleep 1
+          done
+        done
+
+        echo "🎉  все топики готовы, kafka-setup завершается."
       '
+
 
 
   kafka-ui:
@@ -76,7 +82,7 @@ services:
       - "8082:8082"
     depends_on:
       kafka-setup:
-        condition: service_started
+        condition: service_completed_successfully
       mongo:
         condition: service_started
     environment:

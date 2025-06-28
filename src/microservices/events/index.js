@@ -15,7 +15,6 @@ app.get("/api/events/health", (_, res) =>
   res.status(200).json({ status: true })
 );
 
-// 7.2  Универсальный хендлер генерации событий
 function eventHandler(topicKey) {
   return async (req, res, next) => {
     try {
@@ -32,19 +31,15 @@ function eventHandler(topicKey) {
   };
 }
 
-// 7.3  REST-эндпоинты
 app.post("/api/events/movie", eventHandler("movie"));
 app.post("/api/events/user", eventHandler("user"));
 app.post("/api/events/payment", eventHandler("payment"));
 
-// 7.4  Глобальная обработка ошибок
 app.use((err, _req, res, _next) =>
   res.status(500).json({ error: err.message })
 );
 
-// 7.5  Стартуем
 (async () => {
-  // подключаем Kafka & Mongo
   const collection = await dbReady;
 
   await initKafka(async (topic, { value }) => {
