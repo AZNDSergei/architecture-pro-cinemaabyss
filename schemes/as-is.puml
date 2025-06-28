@@ -1,0 +1,19 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+Person(customer, "Пользователь", "Подписывается, смотрит фильмы")
+
+Boundary(core, "Domain: Leisure (досуг)") {
+    System(monolith, "Кинобездна", "Go Monolith")
+}
+
+Boundary(external, "Subdomain: External Systems") {
+ System_Ext(recommendation, "Внешняя рекомендательная система")
+    System_Ext(partners, "Партнеры", "Партнерские сервисы, контент")
+}
+
+Rel(customer, monolith, "Запрос подписки, контента")
+Rel(monolith, recommendation, "MQTT запрос рекомендаций")
+Rel(monolith, partners, "Запрос к партнерам", "REST API/MQTT")
+ 
+@enduml

@@ -11,10 +11,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// Database connection
 var db *sql.DB
 
-// Models
 type Movie struct {
 	ID          int      `json:"id"`
 	Title       string   `json:"title"`
@@ -28,25 +26,23 @@ func main() {
 	initDB()
 	defer db.Close()
 
-	// Set up HTTP routes
+	log.Printf("Request obtained by movie-microservice")
+	http.HandleFunc("/api/movies/health", healthHandler)
 	http.HandleFunc("/api/movies", handleMovies)
-	http.HandleFunc("/api/movies/health", handleHealth)
 
-	// Start server
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8081" // Note: Using a different port than the monolith
+		port = "8081"
 	}
-	log.Printf("Starting movies microservice on port %s", port)
+	log.Printf("Starting server on port %s", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
 func initDB() {
 	connStr := os.Getenv("DB_CONNECTION_STRING")
 	if connStr == "" {
-		connStr = "postgres://postgres:postgres@localhost/cinemaabyss?sslmode=disable"
+		connStr = "postgres://postgres:postgres-micro@localhost/microcinema?sslmode=disable"
 	}
-
 	var err error
 	db, err = sql.Open("postgres", connStr)
 	if err != nil {
@@ -60,12 +56,11 @@ func initDB() {
 	log.Println("Successfully connected to database")
 }
 
-func handleHealth(w http.ResponseWriter, r *http.Request) {
+func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]bool{"status": true})
 }
 
-// Movie handlers
 func handleMovies(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
@@ -83,7 +78,7 @@ func handleMovies(w http.ResponseWriter, r *http.Request) {
 
 func getAllMovies(w http.ResponseWriter, r *http.Request) {
 	rows, err := db.Query("SELECT id, title, description, rating FROM movies")
-	fmt.Println("get movies from movies")
+	fmt.Println("get movies from monolith")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

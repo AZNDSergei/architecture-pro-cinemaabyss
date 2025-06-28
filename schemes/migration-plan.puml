@@ -1,0 +1,18 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+Person(customer, "Customer")
+Boundary(migration, "Migration scheme - routing") {
+       Container(frontend, "web/tv/mobile", "клиентское устройство")
+       Container(gateway, "Gateway", "nginx")
+       Container(bff, "BFF", "backend-for-frontend")
+       Container(acl, "Proxy", "Go - ACL")
+       Container(monolith, "Legacy-system (monolith)", "Go")
+       Container(movies,"Movies", "Go", "New meta-service") 
+Rel(customer, frontend, "вызывает")
+Rel(frontend, gateway, "http")
+Rel(gateway,bff,"http")
+Rel(bff, acl, "topic")
+Rel(acl, monolith, "http-rest", "migration%")
+Rel(acl, movies, "http-rest","migration%")
+}
+@enduml

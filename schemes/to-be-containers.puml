@@ -1,0 +1,139 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(customer, "Customer", "Пользователь кинотеатра")
+
+Boundary(infrastructure, "Поддомен: Infrastructure") {
+System_Boundary(external_communication_context, "External Communications Context") {
+      
+       Container(mobile, "Mobile Application", "React Native", "Mobile Client")
+       Container(web, "Web Application", "React", "Web Client")
+       Container(tv, "TV", "React Native", "TV Client")
+           
+       Container(nginx_gateway, "Gateway", "NGINX", "Единая точка входа в систему. Логирование, кэширование, контроль доступа")
+       Container(mobile_bff, "Mobile BFF", "Go", "mobile clients backend-for-frontend")
+       Container(web_bff, "Web BFF", "Go", "web clients backend-for-frontend")
+       Container(tv_bff, "TV BFF", "Go", "TV clients backend-for-frontend")
+       Container(notifications, "Notifications", "Go", "Socket notifications")
+}
+System_Boundary(partner_integration_context, "Partner Integrations Context") {
+Container(rabbit_broker, "RabbitMQ", "MQTT", "Очередь для взаимодействия с внешней рекомендательной системой")
+Container(content_integration_gateway, "Content Integration Gateway", "Go", "Интеграционный шлюз для партнеров")
+}
+
+System_Boundary(internal_communication_context, "Internal Communications Context") {
+Container(kafka_broker, "Kafka", "Binary protocol", "Очередь для взаимодействия компонентов системы")
+Container(acl, "ACL", "Go", "Anticorruption layer для нивелирования проблем коммуникации legacy- и новой систем")
+}
+
+Container_Ext(recommendation, "Recommendation system", "...", "Внешняя рекомендательная система")
+Container_Ext(external_partners, "External partners system", "...", "Внешние системы партнеров. Контент, лояльность, прочие сервисы")
+
+Rel(nginx_gateway, mobile_bff, "Binary Protocol")
+Rel(nginx_gateway, web_bff, "Binary Protocol")
+Rel(nginx_gateway, tv_bff, "Binary Protocol")
+Rel(rabbit_broker, recommendation, "MQTT")
+Rel(content_integration_gateway, external_partners, "REST/MQTT")
+Rel(customer, web, "Использует")
+Rel(customer, mobile, "Использует")
+Rel(customer, tv, "Использует")
+}
+
+
+Boundary(roi, "Поддомен: ROI & Money Flows") {
+
+System_Boundary(financial_operations_context, "Financial Operations Context") {
+Container(earning, "Earning", "Go", "Операции связанные с подпиской и прочими средствами извлечения прибыли")
+ContainerDb(earningdb, "Earning Relational Database", "PostgreSQL", "База данных пользователей")
+Container(payment_gateway, "Payment Gateway", "Go", "Платежный шлюз")
+ContainerDb(payment_gatewaydb, "Payment Relational Database", "PostgreSQL", "База данных пользователей")
+}
+
+System_Boundary(reward_context, "Reward Context") {
+Container(loyalty, "Loyalty", "Go", "Разные средства вознаграждения пользователя: скидки, баллы лояльности")
+ContainerDb(loyaltydb, "Loyalty Immutable Database", "EventStore", "Иммутабельный журнал")
+}
+
+Rel(earning, payment_gateway, "Binary Protocol")
+Rel(earning, loyalty, "gRPC")
+Rel(loyalty, loyaltydb, "gRPC")
+Rel(earning, earningdb, "TCP/IP")
+Rel(payment_gateway, payment_gatewaydb, "TCP/IP")
+
+}
+
+Boundary(entertainment, "Core-Поддомен: Развлечения") {
+
+System_Boundary(transit_system_context, "Transit Systems Context") {
+Container(old_monolith, "Old Monolith", "Go", "Legacy-система")
+Container(old_monolithdb, "Monolith Relational Database", "PostgreSQL", "База данных legacy-системы")
+}
+
+System_Boundary(enrichment_context, "Enrichment Context") {
+Container(library, "Library", "Go", "Каталог фильмов")
+ContainerDb(libraryDb, "Library NoSQL Database", "MongoDB", "Данные каталога фильмов")
+Container(movies, "Movies", "Go", "Метаданные")
+ContainerDb(metadb, "Metadata NoSQL Database", "MongoDB", "База метаданных")
+}
+
+System_Boundary(access_control_context, "Access Control Context") {
+Container(access_control, "Access Control/Deeplink", "Go", "Контроль доступа к контенту, защита от шеринга, подпись URL")
+ContainerDb(access_controldb, "Access Control Immutable Database", "EventStore", "Иммутабельный журнал")
+}
+
+Rel(library, movies, "Binary Protocol")
+Rel(library, access_control, "Binary Protocol")
+Rel(library, libraryDb, "TCP/IP (MongoDB Wire Protocol)")
+Rel(old_monolith, old_monolithdb, "TCP/IP")
+Rel(movies, moviesdb, "TCP/IP (MongoDB Wire Protocol)")
+Rel(access_control, access_controldb, "gRPC")
+}
+
+Boundary(bi, "Поддомен: Business Intelligence") {
+
+System_Boundary(planning_evaluation_context, "Planning & Evaluation Context") {
+Container(monitoring, "Monitoring", "Grafana/Prometheus", "Системы мониторинга и визуализации")
+}
+
+System_Boundary(troubleshooting_context, "Troubleshooting Context") {
+Container(search, "Search", "ElasticSearch", "Отладка/Поиск по логам")
+}
+}
+
+Boundary(security, "Поддомен: Security") {
+
+System_Boundary(authorization_context, "Authorization Context") {
+Container(identity, "Identity Provider", "Keycloak", "Служба выдачи токенов доступа")
+ContainerDb(identitydb, "Keycloak Relational Database", "PostgreSQL", "База данных пользователей")
+}
+
+System_Boundary(internal_control_context, "Internal Control Context") {
+Container(audit, "Audit", "Go", "Журнал аудита")
+ContainerDb(auditdb, "Audit Immutable Database", "EventStore", "Иммутабельный журнал")
+}
+
+Rel(identity,identitydb, "TCP/IP")
+Rel(audit,auditdb, "gRPC")
+}
+
+Rel(acl, old_monolith, "REST/MQTT")
+Rel(nginx_gateway, kafka_broker, "Kafka Binary Protocol")
+Rel(tv_bff, kafka_broker, "Kafka Binary Protocol")
+Rel(web_bff, kafka_broker, "Kafka Binary Protocol")
+Rel(mobile_bff, kafka_broker, "Kafka Binary Protocol")
+Rel(kafka_broker, notifications, "Kafka Binary Protocol")
+Rel(acl, kafka_broker, "Kafka Binary Protocol")
+Rel(acl, meta, "REST")
+Rel(kafka_broker, library, "Kafka Binary Protocol")
+Rel(kafka_broker, monitoring, "Kafka Binary Protocol")
+Rel(kafka_broker, search, "Kafka Binary Protocol")
+Rel(kafka_broker,audit, "Kafka Binary Protocol")
+Rel(nginx_gateway, identity, "REST")
+Rel(old_monolith, rabbit_broker, "MQTT")
+Rel(content_integration_gateway, kafka_broker, "Kafka Binary Protocol")
+Rel(notifications, mobile, "Sockets")
+Rel(notifications, tv, "Sockets")
+Rel(notifications, web, "Sockets")
+
+
+@enduml
