@@ -116,6 +116,8 @@ services:
       - mongo_data:/data/db
     ports:
       - "27017:27017"
+    networks:
+      - cinemaabyss-network
 
   movie-service:
     build:

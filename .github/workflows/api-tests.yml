@@ -57,6 +57,9 @@ jobs:
 
           docker compose up -d --wait event-service
 
+          docker compose ps
+          docker compose logs --tail=50 event-service
+
           # Build the Docker image
           docker build -t cinemaabyss-api-tests .
           
