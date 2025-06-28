@@ -55,10 +55,8 @@ jobs:
         working-directory: tests/postman
         run: |
 
-          # docker compose up -d
-          # Wait for services to be ready
-          echo "Waiting for services to be ready..."
-          docker compose wait event-service
+          docker compose up -d --wait event-service
+
           # Build the Docker image
           docker build -t cinemaabyss-api-tests .
           

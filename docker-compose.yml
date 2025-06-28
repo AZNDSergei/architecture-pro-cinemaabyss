@@ -102,6 +102,11 @@ services:
       - MONGODB_URI=mongodb://mongo:27017
       - MONGODB_DB=eventsdb
       - PORT=8082
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/api/events/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - cinemaabyss-network
 
