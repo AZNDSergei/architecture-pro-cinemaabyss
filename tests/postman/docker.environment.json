@@ -10,13 +10,13 @@
     },
     {
       "key": "moviesServiceUrl",
-      "value": "http://movies-service:8081",
+      "value": "http://movie-service:8081",
       "type": "default",
       "enabled": true
     },
     {
       "key": "eventsServiceUrl",
-      "value": "http://events-service:8082",
+      "value": "http://event-service:8082",
       "type": "default",
       "enabled": true
     },
