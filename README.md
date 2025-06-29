@@ -85,6 +85,8 @@ Audit Immutable Database - база данных сервиса аудита. Д
 
 [kafka postman-тесты](/screenshots/t2_kafka_events_tests.png)
 [kafka ui](/screenshots/t2_kafka_ui.png)
+[тесты из папки postman](/screenshots/t3_newman_tests.png) были вызваны после команды: $env:NODE_TLS_REJECT_UNAUTHORIZED="0", иначе проблема с сертификатом. Postman тесты проходят без проблем.
+
 
 Задание 3. Реализация CI/CD
 
@@ -93,3 +95,9 @@ Audit Immutable Database - база данных сервиса аудита. Д
 [скриншот логов event-service](/screenshots/t3_events_from_powershell.png)
 
 Задание 4. Helm-чарт
+
+[скриншот запуска helm и output в браузере](/screenshots/t4_helm_output.png)
+
+Задание 5. Istio+Circuit Breaker
+
+[скриншот circuit breaker](/screenshots/t5_circuit.png)
