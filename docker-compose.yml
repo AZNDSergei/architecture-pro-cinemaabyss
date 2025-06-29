@@ -168,7 +168,7 @@ services:
       KAFKA_BROKERS: kafka:9092
       KAFKA_INPUT_TOPIC: bff-requests
       MONOLITH_URL: http://cinemaabyss-monolith:8099
-      MOVIES_URL: http://movie-service:8081
+      MOVIE_URL: http://movie-service:8081
       GRADUAL_MIGRATION: "true"
       MOVIES_MIGRATION_PERCENT: "50"
     networks:

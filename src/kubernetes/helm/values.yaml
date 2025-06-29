@@ -5,7 +5,7 @@ global:
 
 # Image pull secrets
 imagePullSecrets:
-  dockerconfigjson: ewoJImF1dGhzIjogewoJCSJnaGNyLmlvIjogewoJCQkiYXV0aCI6
+  dockerconfigjson: ewoJImF1dGhzIjogeyJnaGNyLmlvIjogeyJhdXRoIjoiUVZwT1JGTmxjbWRsYVRwbmFIQmZaV2c1WTJjeFUxaFJNMWh2YVdGWk9WZzJXWEJMUjB4SVZqTlRVMlZrTWtaSGFVRkcifX0sCgkiY3JlZHNTdG9yZSI6ICJkZXNrdG9wIiwKCSJjcmVkSGVscGVycyI6IHsKCQkiY29udGFpbmVyLXJlZ2lzdHJ5LmNsb3VkLnlhbmRleC5uZXQiOiAieWMiLAoJCSJjci5jbG91ZC55YW5kZXgubmV0IjogInljIiwKCQkiY3IueWFuZGV4IjogInljIgoJfSwKCSJjdXJyZW50Q29udGV4dCI6ICJkZXNrdG9wLWxpbnV4IiwKCSJwbHVnaW5zIjogewoJCSJkZWJ1ZyI6IHsKCQkJImhvb2tzIjogImV4ZWMiCgkJfSwKCQkic2NvdXQiOiB7CgkJCSJob29rcyI6ICJwdWxsLGJ1aWxkeCBidWlsZCIKCQl9Cgl9LAoJImZlYXR1cmVzIjogewoJCSJob29rcyI6ICJ0cnVlIgoJfQp9
 # Database configuration
 database:
   host: postgres
@@ -33,7 +33,7 @@ database:
 monolith:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabysstest/monolith
+    repository: ghcr.io/azndsergei/architecture-pro-cinemaabyss/monolith
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -49,11 +49,10 @@ monolith:
     targetPort: 8099
     type: ClusterIP
 
-# Proxy service configuration
 proxyService:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabysstest/proxy-service
+    repository: ghcr.io/azndsergei/architecture-pro-cinemaabyss/proxy-service
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -66,14 +65,13 @@ proxyService:
       memory: 128Mi
   service:
     port: 80
-    targetPort: 8000
+    targetPort: 8080
     type: ClusterIP
 
-# Movies service configuration
-moviesService:
+movieService:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabysstest/movies-service
+    repository: ghcr.io/azndsergei/architecture-pro-cinemaabyss/movie-service
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -90,10 +88,10 @@ moviesService:
     type: ClusterIP
 
 # Events service configuration
-eventsService:
+eventService:
   enabled: true
   image:
-    repository: ghcr.io/db-exp/cinemaabysstest/events-service
+    repository: ghcr.io/azndsergei/architecture-pro-cinemaabyss/event-service
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -159,6 +157,29 @@ zookeeper:
     size: 1Gi
     accessMode: ReadWriteOnce
 
+mongo:
+  enabled: true
+  image:
+    repository: mongo
+    tag: "8"
+    pullPolicy: IfNotPresent
+  replicas: 1
+  service:
+    port: 27017
+    targetPort: 27017
+    type: ClusterIP
+  resources:
+    limits:
+      cpu: 300m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  persistence:
+    enabled: true
+    size: 1Gi
+    accessMode: ReadWriteOnce
+
 # Ingress configuration
 ingress:
   enabled: true
@@ -173,13 +194,18 @@ ingress:
           pathType: Prefix
           service: proxy-service
           port: 80
+        - path: /api/movies
+          pathType: Prefix
+          service: proxy-service
+          port: 80
         - path: /api/events
           pathType: Prefix
-          service: events-service
+          service: event-service
           port: 8082
+
 
 # Application configuration
 config:
   # Strangler Fig configuration
   gradualMigration: "true"
-  moviesMigrationPercent: "100"
+  moviesMigrationPercent: "50"

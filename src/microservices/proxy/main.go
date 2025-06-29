@@ -15,7 +15,7 @@ import (
 
 var (
 	monolithURL = env("MONOLITH_URL", "http://monolith:8099")
-	moviesURL   = env("MOVIES_URL", "http://movie-service:8081")
+	moviesURL   = env("MOVIE_URL", "http://movie-service:8081")
 	listenAddr  = ":" + env("PORT", "8080")
 )
 
@@ -46,7 +46,12 @@ func newProxy(target string) *httputil.ReverseProxy {
 	if err != nil {
 		log.Fatalf("некорректный URL %q: %v", target, err)
 	}
-	return httputil.NewSingleHostReverseProxy(u)
+	p := httputil.NewSingleHostReverseProxy(u)
+	p.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+		log.Printf("❌ Proxy error to %s: %v", target, err)
+		http.Error(w, "Proxy error", http.StatusBadGateway)
+	}
+	return p
 }
 
 /* ---------- main ---------- */
@@ -69,15 +74,17 @@ func main() {
 
 		if strings.HasPrefix(r.URL.Path, "/api/movies") {
 			if chooseMovies() {
+				log.Printf("→ forwarding to movie-service (%s)", moviesURL)
 				proxyMovies.ServeHTTP(w, r)
 				return
 			}
+			log.Printf("→ forwarding to monolith (%s)", monolithURL)
 			proxyMonolith.ServeHTTP(w, r)
 			return
 		}
 
+		log.Printf("→ forwarding to monolith (%s) (fallback)", monolithURL)
 		proxyMonolith.ServeHTTP(w, r)
-		return
 	})
 
 	log.Printf("proxy listening on %s (gradual=%v, percent=%d)", listenAddr, gradualMigration, migrationPercent)
