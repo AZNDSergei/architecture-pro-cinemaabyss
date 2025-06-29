@@ -1,0 +1,62 @@
+{{- if .Values.mongo.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongo
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: mongo
+    app.kubernetes.io/name: {{ include "cinemaabyss.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.mongo.replicas }}
+  serviceName: mongo
+  selector:
+    matchLabels:
+      app: mongo
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      containers:
+      - name: mongo
+        image: {{ .Values.mongo.image.repository }}:{{ .Values.mongo.image.tag }}
+        imagePullPolicy: {{ .Values.mongo.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.mongo.service.targetPort }}
+        volumeMounts:
+        - name: mongo-data
+          mountPath: /data/db
+        resources:
+          {{- toYaml .Values.mongo.resources | nindent 10 }}
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: dockerconfigjson
+  volumeClaimTemplates:
+  - metadata:
+      name: mongo-data
+    spec:
+      accessModes:
+        - {{ .Values.mongo.persistence.accessMode }}
+      resources:
+        requests:
+          storage: {{ .Values.mongo.persistence.size }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: mongo
+    app.kubernetes.io/name: {{ include "cinemaabyss.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  selector:
+    app: mongo
+  ports:
+  - port: {{ .Values.mongo.service.port }}
+    targetPort: {{ .Values.mongo.service.targetPort }}
+  type: {{ .Values.mongo.service.type }}
+{{- end }}

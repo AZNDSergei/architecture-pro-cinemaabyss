@@ -1,0 +1,76 @@
+{{- if .Values.movieService.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: movie-service
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: movie-service
+    app.kubernetes.io/name: {{ include "cinemaabyss.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.movieService.replicas }}
+  selector:
+    matchLabels:
+      app: movie-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: movie-service
+    spec:
+      containers:
+      - name: movie-service
+        image: {{ .Values.movieService.image.repository }}:{{ .Values.movieService.image.tag }}
+        imagePullPolicy: {{ .Values.movieService.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.movieService.service.targetPort }}
+        env:
+        - name: PORT
+          value: "{{ .Values.movieService.service.targetPort }}"
+        - name: DB_CONNECTION_STRING
+          value: "postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable"
+        envFrom:
+        - configMapRef:
+            name: cinemaabyss-config
+        - secretRef:
+            name: cinemaabyss-secrets
+        resources:
+          {{- toYaml .Values.movieService.resources | nindent 10 }}
+        readinessProbe:
+          httpGet:
+            path: /api/movies/health
+            port: {{ .Values.movieService.service.targetPort }}
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /api/movies/health
+            port: {{ .Values.movieService.service.targetPort }}
+          initialDelaySeconds: 15
+          periodSeconds: 20
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: dockerconfigjson
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: movie-service
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: movie-service
+    app.kubernetes.io/name: {{ include "cinemaabyss.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  selector:
+    app: movie-service
+  ports:
+  - port: {{ .Values.movieService.service.port }}
+    targetPort: {{ .Values.movieService.service.targetPort }}
+  type: {{ .Values.movieService.service.type }}
+{{- end }}

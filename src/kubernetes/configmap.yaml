@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cinemaabyss-config
+  namespace: cinemaabyss
+data:
+  # Database configuration
+  DB_HOST: "postgres"
+  DB_PORT: "5432"
+  DB_NAME: "cinemaabyss"
+  DB_USER: "postgres"
+
+  # Service URLs
+  MONOLITH_URL: "http://monolith:8099"
+  MOVIE_SERVICE_URL: "http://movie-service:8081"
+  PROXY_SERVICE_URL: "http://proxy-service:8080"
+  EVENT_SERVICE_URL: "http://event-service:8082"
+  # Strangler Fig configuration
+  GRADUAL_MIGRATION: "true"
+  MOVIES_MIGRATION_PERCENT: "100"
